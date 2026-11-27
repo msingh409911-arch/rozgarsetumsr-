@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Rozgar Setu MSR</string>
+    <string name="title_activity_main">Rozgar Setu MSR</string>
+    <string name="package_name">com.rozgarsetu.msr</string>
+    <string name="custom_url_scheme">com.rozgarsetu.msr</string>
+</resources>

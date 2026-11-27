@@ -1,0 +1,372 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ── Global Hardened Primitives ──────────────────────────────────────────
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == "phone");
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'msingh409911@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // ── Entity Validation Blueprints ────────────────────────────────────────
+    function isValidUser(data) {
+      return data.keys().hasAll([
+        'uid', 'email', 'role', 'fullName', 'phone', 'city', 'state',
+        'skills', 'experienceYears', 'resumeUrl', 'companyName', 'industry',
+        'companyDescription', 'activePlan', 'createdAt', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'uid', 'email', 'role', 'fullName', 'phone', 'city', 'state',
+        'skills', 'experienceYears', 'resumeUrl', 'companyName', 'industry',
+        'companyDescription', 'activePlan', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.uid) &&
+      (data.uid == request.auth.uid || isAdmin()) &&
+      data.email is string && data.email.size() >= 3 && data.email.size() <= 160 &&
+      data.role in ['candidate', 'company'] &&
+      data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 100 &&
+      data.phone is string && data.phone.size() <= 20 &&
+      data.city is string && data.city.size() <= 80 &&
+      data.state is string && data.state.size() <= 80 &&
+      data.skills is string && data.skills.size() <= 300 &&
+      data.experienceYears is number && data.experienceYears >= 0 && data.experienceYears <= 60 &&
+      data.resumeUrl is string && data.resumeUrl.size() <= 400 &&
+      data.companyName is string && data.companyName.size() <= 120 &&
+      data.industry is string && data.industry.size() <= 80 &&
+      data.companyDescription is string && data.companyDescription.size() <= 1000 &&
+      data.activePlan in ['none', 'basic_99', 'featured_199', 'monthly_499'] &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidJob(data) {
+      return data.keys().hasAll([
+        'companyId', 'companyName', 'title', 'category', 'locationCity', 'locationState',
+        'salaryMin', 'salaryMax', 'jobType', 'experienceLevel', 'openings',
+        'description', 'requirements', 'planTier', 'isFeatured', 'status',
+        'adminNote', 'createdAt', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'companyId', 'companyName', 'title', 'category', 'locationCity', 'locationState',
+        'salaryMin', 'salaryMax', 'jobType', 'experienceLevel', 'openings',
+        'description', 'requirements', 'planTier', 'isFeatured', 'status',
+        'adminNote', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.companyId) &&
+      (data.companyId == request.auth.uid || isAdmin()) &&
+      data.companyName is string && data.companyName.size() >= 2 && data.companyName.size() <= 120 &&
+      data.title is string && data.title.size() >= 3 && data.title.size() <= 140 &&
+      data.category in [
+        'IT & Software', 'Sales & Marketing', 'Banking & Finance',
+        'Engineering & Manufacturing', 'Logistics & Delivery', 'Healthcare & Pharma',
+        'Education & Teaching', 'Hospitality & Retail', 'BPO & Support', 'Design & Media'
+      ] &&
+      data.locationCity is string && data.locationCity.size() >= 2 && data.locationCity.size() <= 80 &&
+      data.locationState is string && data.locationState.size() >= 2 && data.locationState.size() <= 80 &&
+      data.salaryMin is number && data.salaryMin >= 0 && data.salaryMin <= 10000000 &&
+      data.salaryMax is number && data.salaryMax >= data.salaryMin && data.salaryMax <= 10000000 &&
+      data.jobType in ['Full-time', 'Part-time', 'Remote', 'Internship', 'Contract'] &&
+      data.experienceLevel in ['Fresher', '1-3 Years', '3-5 Years', '5+ Years'] &&
+      data.openings is number && data.openings >= 1 && data.openings <= 5000 &&
+      data.description is string && data.description.size() >= 20 && data.description.size() <= 3000 &&
+      data.requirements is string && data.requirements.size() >= 10 && data.requirements.size() <= 1500 &&
+      data.planTier in ['basic_99', 'featured_199', 'monthly_499'] &&
+      data.isFeatured is bool &&
+      data.isFeatured == (data.planTier == 'featured_199' || data.planTier == 'monthly_499') &&
+      data.status in ['pending', 'approved', 'rejected', 'closed'] &&
+      data.adminNote is string && data.adminNote.size() <= 400 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidApplication(data) {
+      return data.keys().hasAll([
+        'jobId', 'jobTitle', 'companyId', 'companyName', 'candidateId',
+        'candidateName', 'candidateEmail', 'candidatePhone', 'candidateCity',
+        'experienceYears', 'resumeUrl', 'coverNote', 'status', 'createdAt', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'jobId', 'jobTitle', 'companyId', 'companyName', 'candidateId',
+        'candidateName', 'candidateEmail', 'candidatePhone', 'candidateCity',
+        'experienceYears', 'resumeUrl', 'coverNote', 'status', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.jobId) &&
+      isValidId(data.companyId) &&
+      isValidId(data.candidateId) &&
+      data.jobTitle is string && data.jobTitle.size() >= 2 && data.jobTitle.size() <= 140 &&
+      data.companyName is string && data.companyName.size() >= 2 && data.companyName.size() <= 120 &&
+      data.candidateName is string && data.candidateName.size() >= 2 && data.candidateName.size() <= 100 &&
+      data.candidateEmail is string && data.candidateEmail.size() >= 3 && data.candidateEmail.size() <= 160 &&
+      data.candidatePhone is string && data.candidatePhone.size() >= 6 && data.candidatePhone.size() <= 20 &&
+      data.candidateCity is string && data.candidateCity.size() >= 2 && data.candidateCity.size() <= 80 &&
+      data.experienceYears is number && data.experienceYears >= 0 && data.experienceYears <= 60 &&
+      data.resumeUrl is string && data.resumeUrl.size() <= 400 &&
+      data.coverNote is string && data.coverNote.size() >= 10 && data.coverNote.size() <= 1200 &&
+      data.status in ['submitted', 'shortlisted', 'interview', 'hired', 'rejected'] &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidPlanOrder(data) {
+      return data.keys().hasAll([
+        'companyId', 'companyName', 'planTier', 'amountInr', 'paymentMethod',
+        'paymentReference', 'creditsTotal', 'creditsUsed', 'status', 'createdAt', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'companyId', 'companyName', 'planTier', 'amountInr', 'paymentMethod',
+        'paymentReference', 'creditsTotal', 'creditsUsed', 'status', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.companyId) &&
+      (data.companyId == request.auth.uid || isAdmin()) &&
+      data.companyName is string && data.companyName.size() >= 2 && data.companyName.size() <= 120 &&
+      data.planTier in ['basic_99', 'featured_199', 'monthly_499'] &&
+      data.amountInr is number &&
+      (
+        (data.planTier == 'basic_99' && data.amountInr == 99 && data.creditsTotal == 1) ||
+        (data.planTier == 'featured_199' && data.amountInr == 199 && data.creditsTotal == 1) ||
+        (data.planTier == 'monthly_499' && data.amountInr == 499 && data.creditsTotal == 15)
+      ) &&
+      data.paymentMethod in ['upi', 'card', 'netbanking'] &&
+      data.paymentReference is string && data.paymentReference.size() >= 4 && data.paymentReference.size() <= 80 &&
+      data.creditsTotal is number &&
+      data.creditsUsed is number && data.creditsUsed >= 0 && data.creditsUsed <= data.creditsTotal &&
+      data.status in ['active', 'used', 'expired'] &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidFounderSettings(data) {
+      return data.keys().hasAll([
+        'founderName', 'designation', 'photoUrl', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'founderName', 'designation', 'photoUrl', 'updatedAt'
+      ]) &&
+      data.founderName is string && data.founderName.size() >= 2 && data.founderName.size() <= 100 &&
+      data.designation is string && data.designation.size() >= 2 && data.designation.size() <= 100 &&
+      data.photoUrl is string && data.photoUrl.size() <= 200000 &&
+      data.updatedAt is timestamp;
+    }
+
+    // ── Collection Rules ────────────────────────────────────────────────────
+
+    // 1. Admins registry (read-only)
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && isSignedIn() && (isOwner(adminId) || isAdmin());
+      allow list, write: if false;
+    }
+
+    // 2. Users (Candidates & Companies - PII Isolated)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isSignedIn() && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+
+      allow create: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isOwner(userId) &&
+        isValidUser(incoming()) &&
+        incoming().uid == userId &&
+        incoming().activePlan == 'none' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isValidUser(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().role == existing().role &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (
+            isOwner(userId) &&
+            incoming().activePlan == existing().activePlan &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'fullName', 'phone', 'city', 'state', 'skills', 'experienceYears',
+              'resumeUrl', 'companyName', 'industry', 'companyDescription', 'updatedAt'
+            ])
+          )
+        );
+
+      allow delete: if isAdmin();
+    }
+
+    // 3. Jobs (Pan-India Listings)
+    match /jobs/{jobId} {
+      allow get: if isValidId(jobId) && (
+        existing().status == 'approved' ||
+        (isSignedIn() && (existing().companyId == request.auth.uid || isAdmin()))
+      );
+
+      allow list: if existing().status == 'approved' ||
+        (isSignedIn() && (existing().companyId == request.auth.uid || isAdmin()));
+
+      allow create: if isVerifiedUser() &&
+        isValidId(jobId) &&
+        isValidJob(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (
+            incoming().companyId == request.auth.uid &&
+            incoming().status == 'pending' &&
+            incoming().adminNote == '' &&
+            exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'company'
+          )
+        );
+
+      allow update: if isVerifiedUser() &&
+        isValidId(jobId) &&
+        isValidJob(incoming()) &&
+        incoming().companyId == existing().companyId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (
+            existing().companyId == request.auth.uid &&
+            existing().status != 'rejected' &&
+            incoming().status in ['pending', 'closed'] &&
+            incoming().planTier == existing().planTier &&
+            incoming().isFeatured == existing().isFeatured &&
+            incoming().adminNote == existing().adminNote &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'companyName', 'title', 'category', 'locationCity', 'locationState',
+              'salaryMin', 'salaryMax', 'jobType', 'experienceLevel', 'openings',
+              'description', 'requirements', 'status', 'updatedAt'
+            ])
+          )
+        );
+
+      allow delete: if isVerifiedUser() &&
+        isValidId(jobId) &&
+        (isAdmin() || existing().companyId == request.auth.uid);
+    }
+
+    // 4. Applications (Candidate Free Applications)
+    match /applications/{applicationId} {
+      allow get: if isValidId(applicationId) && isSignedIn() && (
+        existing().candidateId == request.auth.uid ||
+        existing().companyId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        existing().candidateId == request.auth.uid ||
+        existing().companyId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow create: if isVerifiedUser() &&
+        isValidId(applicationId) &&
+        isValidApplication(incoming()) &&
+        incoming().candidateId == request.auth.uid &&
+        incoming().status == 'submitted' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/jobs/$(incoming().jobId)) &&
+        get(/databases/$(database)/documents/jobs/$(incoming().jobId)).data.status == 'approved' &&
+        get(/databases/$(database)/documents/jobs/$(incoming().jobId)).data.companyId == incoming().companyId;
+
+      allow update: if isVerifiedUser() &&
+        isValidId(applicationId) &&
+        isValidApplication(incoming()) &&
+        incoming().jobId == existing().jobId &&
+        incoming().companyId == existing().companyId &&
+        incoming().candidateId == existing().candidateId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (
+            existing().companyId == request.auth.uid &&
+            existing().status != 'hired' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+          )
+        );
+
+      allow delete: if isVerifiedUser() &&
+        isValidId(applicationId) &&
+        (isAdmin() || existing().candidateId == request.auth.uid);
+    }
+
+    // 5. Plan Orders (Basic ₹99, Featured ₹199, Monthly ₹499)
+    match /planOrders/{orderId} {
+      allow get: if isValidId(orderId) && isSignedIn() && (
+        existing().companyId == request.auth.uid || isAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        existing().companyId == request.auth.uid || isAdmin()
+      );
+
+      allow create: if isVerifiedUser() &&
+        isValidId(orderId) &&
+        isValidPlanOrder(incoming()) &&
+        incoming().companyId == request.auth.uid &&
+        incoming().creditsUsed == 0 &&
+        incoming().status == 'active' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isVerifiedUser() &&
+        isValidId(orderId) &&
+        isValidPlanOrder(incoming()) &&
+        incoming().companyId == existing().companyId &&
+        incoming().planTier == existing().planTier &&
+        incoming().amountInr == existing().amountInr &&
+        incoming().creditsTotal == existing().creditsTotal &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (
+            existing().companyId == request.auth.uid &&
+            existing().status == 'active' &&
+            incoming().creditsUsed >= existing().creditsUsed &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['creditsUsed', 'status', 'updatedAt'])
+          )
+        );
+
+      allow delete: if isAdmin();
+    }
+
+    // 6. Site Settings (Public Founder Profile Photo managed solely by Admin)
+    match /siteSettings/{settingId} {
+      allow get: if isValidId(settingId) && settingId == 'founder';
+      allow list: if false;
+
+      allow create, update: if isAdmin() &&
+        isValidId(settingId) &&
+        settingId == 'founder' &&
+        isValidFounderSettings(incoming()) &&
+        incoming().updatedAt == request.time;
+
+      allow delete: if isAdmin() && settingId == 'founder';
+    }
+  }
+}

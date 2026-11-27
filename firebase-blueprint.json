@@ -1,0 +1,460 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Candidate or Company account profile stored with strict owner/admin PII isolation.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 160
+        },
+        "role": {
+          "type": "string",
+          "enum": ["candidate", "company"]
+        },
+        "fullName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 20
+        },
+        "city": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 80
+        },
+        "state": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 80
+        },
+        "skills": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 300
+        },
+        "experienceYears": {
+          "type": "number"
+        },
+        "resumeUrl": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 400
+        },
+        "companyName": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 120
+        },
+        "industry": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 80
+        },
+        "companyDescription": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 1000
+        },
+        "activePlan": {
+          "type": "string",
+          "enum": ["none", "basic_99", "featured_199", "monthly_499"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "email",
+        "role",
+        "fullName",
+        "phone",
+        "city",
+        "state",
+        "skills",
+        "experienceYears",
+        "resumeUrl",
+        "companyName",
+        "industry",
+        "companyDescription",
+        "activePlan",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Trusted read-only admin registry document.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 160
+        }
+      },
+      "required": ["uid", "email"]
+    },
+    "JobListing": {
+      "title": "JobListing",
+      "description": "Pan-India job posting created by a registered company and moderated by Admin.",
+      "type": "object",
+      "properties": {
+        "companyId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "companyName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120
+        },
+        "title": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 140
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "IT & Software",
+            "Sales & Marketing",
+            "Banking & Finance",
+            "Engineering & Manufacturing",
+            "Logistics & Delivery",
+            "Healthcare & Pharma",
+            "Education & Teaching",
+            "Hospitality & Retail",
+            "BPO & Support",
+            "Design & Media"
+          ]
+        },
+        "locationCity": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "locationState": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "salaryMin": {
+          "type": "number"
+        },
+        "salaryMax": {
+          "type": "number"
+        },
+        "jobType": {
+          "type": "string",
+          "enum": ["Full-time", "Part-time", "Remote", "Internship", "Contract"]
+        },
+        "experienceLevel": {
+          "type": "string",
+          "enum": ["Fresher", "1-3 Years", "3-5 Years", "5+ Years"]
+        },
+        "openings": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 3000
+        },
+        "requirements": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 1500
+        },
+        "planTier": {
+          "type": "string",
+          "enum": ["basic_99", "featured_199", "monthly_499"]
+        },
+        "isFeatured": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected", "closed"]
+        },
+        "adminNote": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 400
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "companyId",
+        "companyName",
+        "title",
+        "category",
+        "locationCity",
+        "locationState",
+        "salaryMin",
+        "salaryMax",
+        "jobType",
+        "experienceLevel",
+        "openings",
+        "description",
+        "requirements",
+        "planTier",
+        "isFeatured",
+        "status",
+        "adminNote",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "JobApplication": {
+      "title": "JobApplication",
+      "description": "Free job application submitted by a candidate for an approved job.",
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "jobTitle": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 140
+        },
+        "companyId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "companyName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120
+        },
+        "candidateId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "candidateName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "candidateEmail": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 160
+        },
+        "candidatePhone": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 20
+        },
+        "candidateCity": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "experienceYears": {
+          "type": "number"
+        },
+        "resumeUrl": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 400
+        },
+        "coverNote": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 1200
+        },
+        "status": {
+          "type": "string",
+          "enum": ["submitted", "shortlisted", "interview", "hired", "rejected"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "jobId",
+        "jobTitle",
+        "companyId",
+        "companyName",
+        "candidateId",
+        "candidateName",
+        "candidateEmail",
+        "candidatePhone",
+        "candidateCity",
+        "experienceYears",
+        "resumeUrl",
+        "coverNote",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PlanOrder": {
+      "title": "PlanOrder",
+      "description": "Job posting plan purchase record for Basic (INR 99), Featured (INR 199), or Monthly Company Plan (INR 499).",
+      "type": "object",
+      "properties": {
+        "companyId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "companyName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120
+        },
+        "planTier": {
+          "type": "string",
+          "enum": ["basic_99", "featured_199", "monthly_499"]
+        },
+        "amountInr": {
+          "type": "number"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "enum": ["upi", "card", "netbanking"]
+        },
+        "paymentReference": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 80
+        },
+        "creditsTotal": {
+          "type": "number"
+        },
+        "creditsUsed": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "used", "expired"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "companyId",
+        "companyName",
+        "planTier",
+        "amountInr",
+        "paymentMethod",
+        "paymentReference",
+        "creditsTotal",
+        "creditsUsed",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "FounderSettings": {
+      "title": "FounderSettings",
+      "description": "Public founder branding profile for Rozgar Setu MSR.",
+      "type": "object",
+      "properties": {
+        "founderName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "designation": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "photoUrl": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 200000
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["founderName", "designation", "photoUrl", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user profiles for candidates and companies. Restricted to owner and admin."
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Trusted admin registry."
+    },
+    "/jobs/{jobId}": {
+      "schema": { "$ref": "#/entities/JobListing" },
+      "description": "Pan-India job listings. Approved jobs are readable publicly; pending/rejected/closed jobs are restricted to owning company and admin."
+    },
+    "/applications/{applicationId}": {
+      "schema": { "$ref": "#/entities/JobApplication" },
+      "description": "Candidate applications. Readable only by applicant, target company, and admin."
+    },
+    "/planOrders/{orderId}": {
+      "schema": { "$ref": "#/entities/PlanOrder" },
+      "description": "Company job posting plan orders (INR 99, 199, 499). Readable by owning company and admin."
+    },
+    "/siteSettings/{settingId}": {
+      "schema": { "$ref": "#/entities/FounderSettings" },
+      "description": "Public site branding settings including Founder & Owner photo uploaded by Admin."
+    }
+  }
+}

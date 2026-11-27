@@ -1,0 +1,6 @@
+{
+  "name": "Rozgar Setu MSR",
+  "description": "Pan-India bilingual (Hindi & English) job portal founded by Manish Singh Rajpoot connecting candidates and verified companies across India.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
